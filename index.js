@@ -31,7 +31,7 @@ const barcodeDetector = new BarcodeDetector({
   ]
 });
 
-const ean = "/images/ean.jpg"
+const ean = "/images/phone_test1.jpg"
 
 async function search(image) {
   let blob = await fetch(image).then(r => r.blob());
