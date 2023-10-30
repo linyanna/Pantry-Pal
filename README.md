@@ -1,4 +1,10 @@
-# pantry-pal
+# Pantry-pal
+## Run Server
+1. 
+
+## Setting Up Camera
+1. 
+
 
 TODO List:
 
