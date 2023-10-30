@@ -1,11 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
 </head>
+
 <body>
 </body>
-<script src="index.js"></script>
+<h1>Barcode Scanner</h1>
+
+<!-- register -->
+<script type="module" src="https://fastly.jsdelivr.net/npm/barcode-detector@2/dist/es/side-effects.min.js"></script>
+
+<script type="module">
+  const barcodeDetector = new BarcodeDetector({
+    formats: [
+    'aztec',
+    'code_128',
+    'code_39',
+    'code_93',
+    'codabar',
+    'data_matrix',
+    'ean_13',
+    'ean_8',
+    'itf',
+    'pdf417',
+    'qr_code',
+    'upc_a',
+    'upc_e'
+  ]
+  });
+  async function getImage() {
+    const imageJPG = "/resources/images/ean.jpg"
+    const blob = await fetch(imageJPG).then(response => response.blob());
+    barcodeDetector.detect(blob).then(console.log);
+
+  }
+
+  // const imageFile = await fetch(
+  //   "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Hello%20world!",
+  // ).then((resp) => resp.blob());
+
+</script>
+
 </html>
