@@ -1,9 +1,26 @@
 # Pantry-pal
 ## Run Server
-1. 
+1. Make a new folder and name it `pantry-pal`.
+2. Git clone this repository inside the newly made `pantry-pal` folder:
+    ```
+    cd /USER/PATH/TO/PANTRY-PAL
+    git clone https://github.com/linyanna/pantry-pal.git
+    ```
+3. Install `npm` with `http-server` dependency:
+    ```
+    npm install http-server
+    ```
+4. Run `http-server` in root directory of project by typing the following in terminal:
+    ```
+    http-server
+    ```
+5. Open web browser and type `localhost:8080`.
 
-## Setting Up Camera
-1. 
+## Camera Setup
+1. Navigate to Arduino IDE application locally.
+2. Select `File > Open > PATH_TO_LOCAL_PROJECT > resources > CameraWebServer > CameraWebServer.ino`.
+3. Create new `WifiCredentials.h` file.
+4. Fill in user wifi credentials based on `WifiCredentials_sample.h`.
 
 
 TODO List:
