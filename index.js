@@ -33,6 +33,8 @@ const barcodeDetector = new BarcodeDetector({
 
 const ean = "/resources/images/phone_test1.jpg"
 
+
+
 async function search(image) {
   let blob = await fetch(image).then(r => r.blob());
   barcodeDetector
@@ -40,11 +42,22 @@ async function search(image) {
   .then(console.log("detected"))
   .then((barcodes) => {
     console.log(barcodes)
-    barcodes.forEach((barcode) => console.log(barcode.rawValue));
+    barcodes.forEach((barcode) => {
+      console.log(barcode.rawValue);
+      getFood(barcode.rawValue.toString());
+    }
+    );
   })
   .catch((err) => {
     console.log(err);
   });
 }
 
+async function getFood(barcode) {
+  let foodInfo = await fetch("https://world.openfoodfacts.org/api/v2/product/" + barcode).then(res => res.json());
+
+  console.log(foodInfo)
+}
+
 search(ean);
+// getFood("737628064502")
