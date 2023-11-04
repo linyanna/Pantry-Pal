@@ -1,0 +1,4 @@
+# Ignore user-specific files
+.DS_Store
+/resources/CameraWebServer/WifiCredentials.h
+node_modules

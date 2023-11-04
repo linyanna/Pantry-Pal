@@ -1,3 +1,5 @@
+/********* Barcode Detection API *********/
+
 // check compatibility
 if (!("BarcodeDetector" in window)) {
   console.log("Barcode Detector is not supported by this browser.");
@@ -31,33 +33,28 @@ const barcodeDetector = new BarcodeDetector({
   ]
 });
 
-const ean = "/images/phone_test1.jpg"
+// set the image path
+const image = "/resources/images/phone_test1.jpg"
 
-
-
-async function search(image) {
-  let blob = await fetch(image).then(r => r.blob());
+// get barcode value from image
+async function getImage(image) {
+  let blob = await fetch(image).then((res) => res.blob());
   barcodeDetector
   .detect(await createImageBitmap(blob))
-  .then(console.log("detected"))
   .then((barcodes) => {
-    console.log(barcodes)
     barcodes.forEach((barcode) => {
-      console.log(barcode.rawValue);
       getFood(barcode.rawValue.toString());
-    }
-    );
+    });
   })
   .catch((err) => {
     console.log(err);
   });
 }
 
+/********* Open Food Facts API *********/
 async function getFood(barcode) {
   let foodInfo = await fetch("https://world.openfoodfacts.org/api/v2/product/" + barcode).then(res => res.json());
-
   console.log(foodInfo)
 }
 
-search(ean);
-// getFood("737628064502")
+getImage(image);
