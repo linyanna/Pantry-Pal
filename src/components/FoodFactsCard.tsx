@@ -19,7 +19,11 @@ interface Food {
     id: string;
     product_name: string;
     ingredients_text: string;
-    // other properties...
+    selected_images: {
+      front: {
+        thumb: string;
+      };
+    };
   };
 }
 
