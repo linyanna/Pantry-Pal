@@ -1,6 +1,7 @@
 import DeployButton from '../components/DeployButton'
 import AuthButton from '../components/AuthButton'
-import FoodFactsCard from '@/src/components/FoodFactsCard'
+import FoodFactsCard from '../components/FoodFactsCard'
+import InventoryTable from '../components/InventoryTable'
 
 export default async function Index() {
   return (
@@ -11,7 +12,8 @@ export default async function Index() {
           <AuthButton />
         </div>
       </nav>
-     <FoodFactsCard />
+      <FoodFactsCard />
+     <InventoryTable />
       <footer className="w-full border-t border-t-foreground/10 p-8 flex justify-center text-center text-xs">
         <p>
           We love Pantry Pal.
