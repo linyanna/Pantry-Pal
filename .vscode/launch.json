@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/janiafernan/Documents/semester/CIS4930/pantry-pal/resources/CameraWebServer",
+      "program": "/Users/janiafernan/Documents/semester/CIS4930/pantry-pal/resources/CameraWebServer/build/Debug/outDebug"
+    }
+  ]
+}
