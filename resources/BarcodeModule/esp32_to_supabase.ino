@@ -1,3 +1,4 @@
+#include <ESP32_Supabase.h>
 #include <WiFiClientSecure.h>
 #include <WiFi.h>
 
