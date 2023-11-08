@@ -46,7 +46,7 @@ export default function InventoryTable() {
     try {
         // Select all products
         let { data: storages, error } = await supabase
-            .from('products')
+            .from('products_duplicate')
             .select('*')
         if (error) { throw error }
         // Upon a successful response, update the inventory
@@ -64,7 +64,7 @@ export default function InventoryTable() {
         // Insert the new item, providing the item name; the rest gets
         // filled in automatically
         let { data, error } = await supabase
-            .from('products')
+            .from('products_duplicate')
             .insert([{name:"hi", barcode: 123}]);
 
         // Handle any errors.
