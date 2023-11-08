@@ -23,8 +23,7 @@ int sendingInterval = 1200; // 20 minutes
 HTTPClient https;
 WiFiClientSecure client;
 
-String barcode = "{\"barcode\": 1234567890}";
-String JSON = "{\"name\": \"powerpuffs\", " + barcode.substring(1, barcode.length() - 1) +", \"ingredients\": \"sugar, spice, and everything nice\"}";
+String JSON = "{\"name\": \"powerpuffs\", \"barcode\": 1234567890, \"ingredients\": \"sugar, spice, and everything nice\"}";
 
 
 //define I2C address
