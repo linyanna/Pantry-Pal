@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/src/components/ui/table"
 
-// Import the Supabase client from utils.
+// Import the Supabase client from utils
 import { supabase } from '../lib/utils/supabase/supabaseConnection';
 
 interface Product {
@@ -30,31 +30,26 @@ interface Product {
 }
 
 export default function InventoryTable() {
-  // Establish the state variables.
   const [newProduct, setNewProduct] = useState<any | null>(null);
   const [inventory, setInventory] = useState<any[] | []>([]);
 
-  // Have the app fetch the inventory on load.
   useEffect(() => {
     fetchInventory();
   }, [])
 
-  // Retrieve the shopping list items.
+  // Retrieve the products
   const fetchInventory = async () => {
-    // Clear the shopping list first.
+    // Clear the products
     setInventory([]);
 
-    // Execute a Supabase query to fetch the shopping list.
+    // Execute a Supabase query to fetch the inventory
     try {
         // Select all products
         let { data: storages, error } = await supabase
-            .from('inventory')
+            .from('products_duplicate')
             .select('*')
-
-        // Handle any errors.
         if (error) { throw error }
-
-        // Upon a successful response, update the inventory.
+        // Upon a successful response, update the inventory
         if (storages) {
             setInventory(storages);
         }
@@ -66,16 +61,15 @@ export default function InventoryTable() {
   // Add a new product to storage
   const addProduct = async () => {
     try {
-        // Insert the new item, providing the item name. The rest gets
-        // filled in automatically.
+        // Insert the new item, providing the item name; the rest gets
+        // filled in automatically
         let { data, error } = await supabase
-            .from('inventory')
+            .from('products_duplicate')
             .insert([{name:"hi", barcode: 123}]);
 
         // Handle any errors.
         if (error) { throw error }
-
-        // Upon success, update the shopping list.
+        // Upon success, update the inventory
         if (data) {
             fetchInventory();
         }

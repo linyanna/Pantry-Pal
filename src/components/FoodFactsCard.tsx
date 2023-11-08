@@ -13,6 +13,9 @@ import {
 } from "@/src/components/ui/card"
 import image from "@/public/images/phone_test1.jpg"
 
+// Import the Supabase client from utils.
+import { supabase } from '../lib/utils/supabase/supabaseConnection';
+
 interface Food {
   code: string;
   product: {
@@ -30,7 +33,6 @@ interface Food {
 export default function FoodFactsCard() {
   const [food, setFood] = useState<Food | null>(null);
 
-
   // create new detector
   const barcodeDetector = new BarcodeDetector({
     formats: [
@@ -40,10 +42,9 @@ export default function FoodFactsCard() {
 
   // set the image path
   const imageSrc = image.src;
-  // const image = "https://www.carlisletechnology.com/wp-content/uploads/shutterstock_6238609.png";
 
   // get barcode value from image
-  async function getImage(imageSrc: string) {
+  async function getBarcode(imageSrc: string) {
     console.log("Getting image...")
     let blob = await fetch(imageSrc).then((res) => res.blob());
     barcodeDetector
@@ -63,14 +64,20 @@ export default function FoodFactsCard() {
   async function getFood(barcode: string) {
     console.log("Getting food info...");
     let foodInfo = await fetch("https://world.openfoodfacts.org/api/v2/product/" + barcode).then(res => res.json());
-    console.log(foodInfo)
+    console.log(foodInfo);
     setFood(foodInfo);
   }
 
+  async function getImage(imageId: string) {
+    // images is public so returns a public url
+    const { data } = await supabase.storage.from('images').getPublicUrl(imageId);
+    getBarcode(data.publicUrl.toString());
+  }
 
   return (
     <div>
-      <Button variant="outline" className="mb-4" onClick={() => getImage(imageSrc)}>Get Food Data</Button>
+      <p>Read the barcode from an <a href="https://ninnntxqlfkxrtwsxtao.supabase.co/storage/v1/object/public/images/phone_test1.jpg" target="_blank" referrerPolicy="no-referrer"><u>image</u></a> in our database:</p>
+      <Button variant="outline" className="mb-4" onClick={() => getImage("phone_test1.jpg")}>Read Barcode</Button>
 
       {
         food && (
@@ -85,7 +92,6 @@ export default function FoodFactsCard() {
           </Card>
         )
       }
-      
 
     </div>
   )
