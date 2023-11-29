@@ -34,8 +34,17 @@ export default function InventoryTable() {
   const [inventory, setInventory] = useState<any[] | []>([]);
 
   useEffect(() => {
-    updateInventory();
-    fetchInventory();
+    let isMounted = true;
+    const inventoryTimeout = setTimeout(() => {
+      if(isMounted) {
+        updateInventory();
+        fetchInventory();
+      }
+    }, 5000)
+    return () => {
+      isMounted = false;
+      clearTimeout(inventoryTimeout);
+    };
   }, [])
 
   // Retrieve the products
@@ -92,7 +101,7 @@ export default function InventoryTable() {
         if (data.length == 0) console.log("No new entries found");
         else {
           let tableEntries: Array<{scan_mode: string, barcode: number}> = data;
-          for (let i = 0; i < 3 ; i++) {
+          for (let i = 0; i < 4 ; i++) {
             try {
               console.log(i + "New entry: " + tableEntries[i].barcode + tableEntries[i].scan_mode); 
               let { data, error } = await supabase
