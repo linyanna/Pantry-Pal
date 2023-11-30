@@ -32,7 +32,9 @@ interface Product {
 export default function InventoryTable() {
   const [newProduct, setNewProduct] = useState<any | null>(null);
   const [inventory, setInventory] = useState<any[] | []>([]);
-
+  const [showIngredients, setShowIngredients] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<any[]>([]);
+  const [statusMessage, setStatusMessage] = useState("Checking for new entries...");
   useEffect(() => {
     let isMounted = true;
     const inventoryTimeout = setTimeout(() => {
@@ -47,16 +49,20 @@ export default function InventoryTable() {
     };
   }, [])
 
+  const toggleIngredients = () => {
+    setShowIngredients(!showIngredients);
+  };
+  
   // Retrieve the products
   const fetchInventory = async () => {
     // Clear the products
     setInventory([]);
-
+    setStatusMessage("");
     // Execute a Supabase query to fetch the inventory
     try {
         // Select all products
         let { data: storages, error } = await supabase
-            .from('products_duplicate')
+            .from('products')
             .select('*')
         if (error) { throw error }
         // Upon a successful response, update the inventory
@@ -98,12 +104,16 @@ export default function InventoryTable() {
         throw error;
       }
       if (data) {
-        if (data.length == 0) console.log("No new entries found");
+        if (data.length == 0) {
+          console.log("No new entries found");
+          setStatusMessage("Table up to date!")
+        }
         else {
           let tableEntries: Array<{scan_mode: string, barcode: number}> = data;
-          for (let i = 0; i < 4 ; i++) {
+          setStatusMessage("New entries found! Updating your table...");
+          for (let i = 0; i < tableEntries.length ; i++) {
             try {
-              console.log(i + "New entry: " + tableEntries[i].barcode + tableEntries[i].scan_mode); 
+              console.log("Loop " + i + " - New entry: " + tableEntries[i].barcode + tableEntries[i].scan_mode); 
               let { data, error } = await supabase
                   .from('products')
                   .select('*')
@@ -123,7 +133,7 @@ export default function InventoryTable() {
                     console.log("Adding product to table...");
                     // Add product with scanned barcode to table along with its fetched info from API
                     try {
-                      let { error } = await supabase
+                      let { data, error } = await supabase
                           .from('products')
                           .insert({
                             name: foodInfo.product.product_name, 
@@ -136,6 +146,7 @@ export default function InventoryTable() {
                         throw error 
                       } else {
                         console.log("   Successfully added product to table.");
+                        console.log(data)
                       }
                     } catch (error) {
                       alert((error as Error).message);
@@ -145,7 +156,10 @@ export default function InventoryTable() {
                 else {
                   // CASE 3: Removing scanned barcode that exists in products table
                   if (tableEntries[i].scan_mode === "remove") {
-                    // Remove product with scanned barcode from table
+                    let newQuantity = data[0].quantity - 1;
+                    console.log("New Quantity after remove: " + newQuantity)
+                    if (newQuantity == 0) {
+                      // Remove product with scanned barcode from table
                     console.log("Removing product from table...");
                     try {
                       let { error } = await supabase 
@@ -159,6 +173,23 @@ export default function InventoryTable() {
                       }
                     } catch (error) {
                       alert((error as Error).message);
+                    }
+                    }
+                    else {
+                      console.log("Decrementing quantity by one")
+                      try {
+                        let { error } = await supabase
+                            .from('products')
+                            .update({quantity: newQuantity})
+                            .eq('barcode', tableEntries[i].barcode);
+                        if (error) { 
+                          throw error 
+                        } else {
+                          console.log("   Successfully updated quantity of product in table to " + newQuantity);
+                        }
+                      } catch (error) {
+                      alert((error as Error).message);
+                      }
                     }
                   }
                   // CASE 4: Adding scanned barcode that exists in products table
@@ -182,6 +213,7 @@ export default function InventoryTable() {
                   }
                 }
                 /// TODO_AFTER_TESTING: delete from barcodes table
+                
               }
           } catch (error) {
               alert((error as Error).message);
@@ -192,6 +224,7 @@ export default function InventoryTable() {
   } catch (error) {
       alert((error as Error).message);
   }
+  fetchInventory();
   }
 
   const addProductBarcode = async (barcode: string | number) => {
@@ -215,8 +248,25 @@ export default function InventoryTable() {
     }
 }
 
+const handleRowExpand = (index: number) => {
+  if (expandedRows.includes(index)) {
+    setExpandedRows(expandedRows.filter((rowIndex) => rowIndex !== index));
+  } else {
+    setExpandedRows([...expandedRows, index]);
+  }
+};
+
+const truncateText = (text: string, maxLength: number) => {
+  if (text.length <= maxLength) {
+    return text;
+  } else {
+    return text.substring(0, maxLength) + '...';
+  }
+};
+
   return (
     <div>
+      <p>{statusMessage}</p>
       {
         inventory && (
           <Table>
@@ -231,13 +281,21 @@ export default function InventoryTable() {
             </TableHeader>
             <TableBody>
               {
-                inventory.map((row: any) => {
+                inventory.map((row: any, index: number) => {
+                  const isExpanded = expandedRows.includes(index);
                   return (
                     <TableRow key={row.barcode}>
                       <TableCell className="font-medium">{row.name}</TableCell>
                       <TableCell>{row.barcode}</TableCell>
                       <TableCell>{row.quantity}</TableCell>
-                      <TableCell className="text-right">{row.ingredients}</TableCell>
+                      <TableCell className="text-right">
+                        {isExpanded ? row.ingredients : truncateText(row.ingredients, 15)}
+                        {row.ingredients.length > 15 && (
+                          <button onClick={() => handleRowExpand(index)}>
+                            {isExpanded ? '  (Collapse)' : '...'}
+                          </button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   )
                 })
