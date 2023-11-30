@@ -90,8 +90,6 @@ void loop() {
   {
     Serial.print("Code found: ");
     Serial.print(scanBuffer);
-    // for (int i = 0; i < strlen(scanBuffer); i++)
-    //   Serial.print(scanBuffer[i]);
     Serial.println();
 
     // Ensure Wifi is connected before attempting a request
@@ -107,11 +105,10 @@ void loop() {
 
       // Adjust request depending on scan mode (add or remove)
       String JSON = "{\"barcode\": \"";
-      for (int i = 0; i < strlen(scanBuffer)-1; i++)
+      for (int i = 0; i < strlen(scanBuffer)-1; i++) // 1 less than length to remove new line
         JSON += scanBuffer[i];
 
       if (scanMode == 1) {
-        // String JSON = "{\"barcode\": \"0028400314077\", \"scan_mode\": \"add\"}";
         JSON += "\", \"scan_mode\": \"add\"}"; 
       } else {
         JSON += "\", \"scan_mode\": \"remove\"}"; 
