@@ -35,6 +35,8 @@ export default function InventoryTable() {
   const [showIngredients, setShowIngredients] = useState(false);
   const [expandedRows, setExpandedRows] = useState<any[]>([]);
   const [statusMessage, setStatusMessage] = useState("Checking for new entries...");
+  const [searchQuery, setSearchQuery] = useState('');
+
   useEffect(() => {
     let isMounted = true;
     const inventoryTimeout = setTimeout(() => {
@@ -264,11 +266,25 @@ const truncateText = (text: string, maxLength: number) => {
   }
 };
 
+const filteredInventory = inventory.filter((item: any) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+);
+
+const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+  setSearchQuery(event.target.value);
+};
+
   return (
     <div>
       <p>{statusMessage}</p>
+      <input
+        type="text"
+        placeholder="Search by name..."
+        value={searchQuery}
+        onChange={handleSearch}
+      />
       {
-        inventory && (
+        filteredInventory && (
           <Table>
             <TableCaption>A list of your products.</TableCaption>
             <TableHeader>
@@ -281,7 +297,7 @@ const truncateText = (text: string, maxLength: number) => {
             </TableHeader>
             <TableBody>
               {
-                inventory.map((row: any, index: number) => {
+                filteredInventory.map((row: any, index: number) => {
                   const isExpanded = expandedRows.includes(index);
                   return (
                     <TableRow key={row.barcode}>
