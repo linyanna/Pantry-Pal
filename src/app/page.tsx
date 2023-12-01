@@ -1,5 +1,4 @@
 import AuthButton from '../components/AuthButton'
-import FoodFactsCard from '../components/FoodFactsCard'
 import InventoryTable from '../components/InventoryTable'
 import FridgeInfo from '../components/FridgeInfo'
 import { ModeToggle } from '../components/ModeToggle'
@@ -15,13 +14,19 @@ export default async function Index() {
           <ModeToggle></ModeToggle>
         </div>
       </nav>
-      <h1 className="scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl">Pantry Pal</h1>
+      <div className="flex justify-between w-[75%]">
+        <div>
+          <h1 className="scroll-m-20 text-4xl font-bold   tracking-tight lg:text-5xl">Pantry Pal</h1>
+        </div>
+        <div>
+          <FridgeInfo />
+        </div>
+      </div>
      <InventoryTable />
       <footer className="w-full border-t border-t-foreground/10 p-8 flex justify-center text-center text-xs">
         <p>
           We love Pantry Pal.
         </p>
-        <FridgeInfo />
       </footer>
     </div>
   )

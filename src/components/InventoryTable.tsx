@@ -262,14 +262,14 @@ export default function InventoryTable() {
       />
       {
         filteredInventory && (
-          <Table>
+          <Table className="w-full">
             <TableCaption>A list of your products.</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Name</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Barcode</TableHead>
                 <TableHead>Quantity</TableHead>
-                <TableHead className="text-right w-[300px]">Ingredients</TableHead>
+                <TableHead className="text-right w-[24rem]">Ingredients</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
