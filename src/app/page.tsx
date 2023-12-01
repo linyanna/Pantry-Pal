@@ -7,16 +7,18 @@ export default async function Index() {
   return (
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
       <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-        <div className="w-full max-w-4xl flex justify-end items-center p-3 text-sm">
-          <AuthButton />
-        </div>
-        <div className="flex justify-end items-center p-3 text-sm">
-          <ModeToggle></ModeToggle>
+        <div className="flex md:flex-row justify-end w-full md:w-[800px]">
+          <div className="p-3 text-sm">
+            <AuthButton />
+          </div>
+          <div className="p-3 text-sm">
+            <ModeToggle></ModeToggle>
+          </div>
         </div>
       </nav>
-      <div className="flex flex-col md:flex-row w-full md:w-[1020px] justify-center md:justify-between items-center">
+      <div className="flex flex-col md:flex-row w-full md:w-[800px] justify-center md:justify-between items-center">
         <div>
-          <h1 className="scroll-m-20 text-4xl font-bold   tracking-tight lg:text-5xl">Pantry Pal</h1>
+          <h1 className="scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl">Pantry Pal</h1>
         </div>
         <div>
           <FridgeInfo />

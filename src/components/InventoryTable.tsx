@@ -30,6 +30,13 @@ interface Product {
   };
 }
 
+interface TableEntry {
+    id: Int8Array;
+    updated_at: TimeRanges;
+    barcode: string;
+    scan_mode: string;
+}
+
 export default function InventoryTable() {
   const [inventory, setInventory] = useState<any[] | []>([]);
   const [showIngredients, setShowIngredients] = useState(false);
@@ -42,14 +49,26 @@ export default function InventoryTable() {
     const inventoryTimeout = setTimeout(() => {
       if(isMounted) {
         fetchInventory();
-        updateInventory();
       }
     }, 100)
+
+    const subscription = supabase
+      .channel('esp32_barcodes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'esp32_barcodes' }, handleInserts)
+      .subscribe()
+
     return () => {
       isMounted = false;
       clearTimeout(inventoryTimeout);
+      supabase.removeChannel(subscription);
     };
   }, [])
+
+  const handleInserts = (payload: any): any => {
+    console.log('Change received! 1', payload)
+    console.log(payload.new);
+    updateInventory(payload.new);
+  }
 
   const toggleIngredients = () => {
     setShowIngredients(!showIngredients);
@@ -76,152 +95,119 @@ export default function InventoryTable() {
     }
   }
 
-  async function updateInventory() {
-    console.log("Checking esp32_barcodes table for any entries since last update...");
+  async function updateInventory(tableEntries: TableEntry) {
     try {
+      console.log(tableEntries.barcode + tableEntries.scan_mode); 
       let { data, error } = await supabase
-          .from('esp32_barcodes')
-          .select('*');
-      if (error) { 
-        alert('Error checking esp32_barcodes table: ' + error);
-        throw error;
-      }
+          .from('products')
+          .select('*')
+          .eq('barcode', tableEntries.barcode);
+      if (error) { throw error; }
       if (data) {
         if (data.length == 0) {
-          console.log("No new entries found");
-          setStatusMessage("Table up to date!")
-        }
-        else {
-          let tableEntries: Array<{scan_mode: string, barcode: number}> = data;
-          setStatusMessage("New entries found! Updating your table...");
-          for (let i = 0; i < tableEntries.length ; i++) {
+          // CASE 1: Removing scanned barcode that does not exist in products table
+          if (tableEntries.scan_mode === "remove") {
+            console.log("Tried to remove non-existing inventory, no action taken.");
+          }
+          // CASE 2: Adding scanned barcode that does not exist in products table
+          else {
             try {
-              console.log("Loop " + i + " - New entry: " + tableEntries[i].barcode + tableEntries[i].scan_mode); 
+            console.log("Product not found in table, retrieving name from food API");
+            let foodInfo = await fetch("https://world.openfoodfacts.org/api/v2/product/" + tableEntries.barcode).then(res => res.json());
+            console.log(foodInfo)
+            console.log("Adding product to table...");
+            // Add product with scanned barcode to table along with its fetched info from API
+            let food_name = foodInfo.product.product_name;
+            let ingredient_text = foodInfo.product.ingredients_text;
+            if (food_name == null) food_name = "Unnamed Product";
+            if (ingredient_text == null) ingredient_text = "Unavailable";
+            try {
               let { data, error } = await supabase
                   .from('products')
-                  .select('*')
-                  .eq('barcode', tableEntries[i].barcode);
-              if (error) { throw error; }
-              if (data) {
-                if (data.length == 0) {
-                  // CASE 1: Removing scanned barcode that does not exist in products table
-                  if (tableEntries[i].scan_mode === "remove") {
-                    console.log("Tried to remove non-existing inventory, no action taken.");
-                  }
-                  // CASE 2: Adding scanned barcode that does not exist in products table
-                  else {
-                    try {
-                    console.log("Product not found in table, retrieving name from food API");
-                    let foodInfo = await fetch("https://world.openfoodfacts.org/api/v2/product/" + tableEntries[i].barcode).then(res => res.json());
-                    console.log(foodInfo)
-                    console.log("Adding product to table...");
-                    // Add product with scanned barcode to table along with its fetched info from API
-                    let food_name = foodInfo.product.product_name;
-                    let ingredient_text = foodInfo.product.ingredients_text;
-                    if (food_name == null) food_name = "Unnamed Product";
-                    if (ingredient_text == null) ingredient_text = "Unavailable";
-                    try {
-                      let { data, error } = await supabase
-                          .from('products')
-                          .insert({
-                            name: food_name,
-                            barcode: foodInfo.product.code,
-                            quantity: 1,
-                            inserted_at: new Date(),
-                            ingredients: ingredient_text
-                          });
-                      if (error) { 
-                        throw error 
-                      } else {
-                        console.log("   Successfully added product to table.");
-                        console.log(data)
-                      }
-                    } catch (error) {
-                      alert((error as Error).message);
-                    }
-                  }
-                  catch (error) {
-                    alert((error as Error).message);
-                  }
-                }
-                }
-                else {
-                  // CASE 3: Removing scanned barcode that exists in products table
-                  if (tableEntries[i].scan_mode === "remove") {
-                    let newQuantity = data[0].quantity - 1;
-                    console.log("New Quantity after remove: " + newQuantity)
-                    if (newQuantity == 0) {
-                      // Remove product with scanned barcode from table
-                    console.log("Removing product from table...");
-                    try {
-                      let { error } = await supabase 
-                          .from('products')
-                          .delete()
-                          .eq('barcode', tableEntries[i].barcode);
-                      if (error) { 
-                        throw error 
-                      } else {
-                        console.log("   Successfully removed product from table.");
-                      }
-                    } catch (error) {
-                      alert((error as Error).message);
-                    }
-                    }
-                    else {
-                      console.log("Decrementing quantity by one")
-                      try {
-                        let { error } = await supabase
-                            .from('products')
-                            .update({quantity: newQuantity})
-                            .eq('barcode', tableEntries[i].barcode);
-                        if (error) { 
-                          throw error 
-                        } else {
-                          console.log("   Successfully updated quantity of product in table to " + newQuantity);
-                        }
-                      } catch (error) {
-                      alert((error as Error).message);
-                      }
-                    }
-                  }
-                  // CASE 4: Adding scanned barcode that exists in products table
-                  else {
-                    console.log("Product found in table, raising quantity by one.");
-                    let newQuantity = data[0].quantity + 1;
-                    console.log("Adding quantity of product in table...");
-                    try {
-                      let { error } = await supabase
-                          .from('products')
-                          .update({quantity: newQuantity})
-                          .eq('barcode', tableEntries[i].barcode);
-                      if (error) { 
-                        throw error 
-                      } else {
-                        console.log("   Successfully updated quantity of product in table.");
-                      }
-                    } catch (error) {
-                    alert((error as Error).message);
-                    }
-                  }
-                }
+                  .insert({
+                    name: food_name,
+                    barcode: foodInfo.product.code,
+                    quantity: 1,
+                    inserted_at: new Date(),
+                    ingredients: ingredient_text
+                  });
+              if (error) { 
+                throw error 
+              } else {
+                console.log("   Successfully added product to table.");
+                console.log(data)
               }
-          } catch (error) {
+            } catch (error) {
               alert((error as Error).message);
+            }
           }
+          catch (error) {
+            alert((error as Error).message);
+          }
+        }
+        }
+        else {
+          // CASE 3: Removing scanned barcode that exists in products table
+          if (tableEntries.scan_mode === "remove") {
+            let newQuantity = data[0].quantity - 1;
+            console.log("New Quantity after remove: " + newQuantity)
+            if (newQuantity == 0) {
+              // Remove product with scanned barcode from table
+            console.log("Removing product from table...");
+            try {
+              let { error } = await supabase 
+                  .from('products')
+                  .delete()
+                  .eq('barcode', tableEntries.barcode);
+              if (error) { 
+                throw error 
+              } else {
+                console.log("   Successfully removed product from table.");
+              }
+            } catch (error) {
+              alert((error as Error).message);
+            }
+            }
+            else {
+              console.log("Decrementing quantity by one")
+              try {
+                let { error } = await supabase
+                    .from('products')
+                    .update({quantity: newQuantity})
+                    .eq('barcode', tableEntries.barcode);
+                if (error) { 
+                  throw error 
+                } else {
+                  console.log("   Successfully updated quantity of product in table to " + newQuantity);
+                }
+              } catch (error) {
+              alert((error as Error).message);
+              }
+            }
+          }
+          // CASE 4: Adding scanned barcode that exists in products table
+          else {
+            console.log("Product found in table, raising quantity by one.");
+            let newQuantity = data[0].quantity + 1;
+            console.log("Adding quantity of product in table...");
+            try {
+              let { error } = await supabase
+                  .from('products')
+                  .update({quantity: newQuantity})
+                  .eq('barcode', tableEntries.barcode);
+              if (error) { 
+                throw error 
+              } else {
+                console.log("   Successfully updated quantity of product in table.");
+              }
+            } catch (error) {
+              alert((error as Error).message);
+            }
           }
         }
       }
     } catch (error) {
-        alert((error as Error).message);
-    }
-    let { error } = await supabase 
-      .from('esp32_barcodes')
-      .delete()
-      .gt('id',0);
-    if (error) { 
-      throw error 
-    } else {
-      console.log("   Successfully cleared queried entries.");
+      alert((error as Error).message);
     }
     fetchInventory();
   }
@@ -266,7 +252,7 @@ export default function InventoryTable() {
             <TableCaption>A list of your products.</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead className="w-[12rem]">Name</TableHead>
                 <TableHead>Barcode</TableHead>
                 <TableHead>Quantity</TableHead>
                 <TableHead className="text-right w-[24rem]">Ingredients</TableHead>
