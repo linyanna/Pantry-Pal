@@ -2,6 +2,7 @@ import DeployButton from '../components/DeployButton'
 import AuthButton from '../components/AuthButton'
 import FoodFactsCard from '../components/FoodFactsCard'
 import InventoryTable from '../components/InventoryTable'
+import FridgeInfo from '../components/FridgeInfo'
 
 export default async function Index() {
   return (
@@ -17,6 +18,7 @@ export default async function Index() {
         <p>
           We love Pantry Pal.
         </p>
+        <FridgeInfo />
       </footer>
     </div>
   )
