@@ -3,17 +3,24 @@
 #include <WiFiClientSecure.h>
 #include <WiFi.h>
 #include <NewPing.h>
+#include <time.h>
 // Put your supabase URL and Anon key here...
 // Because Login already implemented, there's no need to use secretrole key
-String API_URL = "";
-String API_KEY = "";
-String TABLE_NAME = "";  // Put your WiFi credentials (SSID and Password) here
-const char *ssid = "";
-const char *pswd = "";  // Sending interval packing in secs
-int sendingInterval = 1200;       // 20 minutes
+String API_URL = "https://ninnntxqlfkxrtwsxtao.supabase.co";
+String API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbm5udHhxbGZreHJ0d3N4dGFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTkxMjU1MDYsImV4cCI6MjAxNDcwMTUwNn0.Wg5_xp25r6UuzRqL1P3tkxDUUzRqlTrK3N-MLPVQKmE";
+String TABLE_NAME = "door_status";  // Put your WiFi credentials (SSID and Password) here
+const char *ssid = "Chung-Fi";
+const char *pswd = "gogators1016";  // Sending interval packing in secs
+int sendingInterval = 1200;         // 20 minutes
 HTTPClient https;
 WiFiClientSecure client;
 String JSON = "{\"isOpen\": }";
+
+
+long int lastChange = 0;
+//main way to determine when to send HTTP requests.
+String oldState = "Closed";
+String newState = "Closed";
 
 #define TRIGGER 33
 #define ECHO 32
@@ -34,38 +41,78 @@ void setup() {
     delay(1000);
     Serial.println(".");
   }
-  Serial.println("Connected!");
+  Serial.println("Connected to WiFi!");
+
+  //set up time config
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.println("\nWaiting for time");
+
+  while (time(nullptr) < 1700000) {
+    Serial.print(".");
+    delay(1000);
+  }
+  Serial.println("Connected to time server!");
 }
 void loop() {
+
+  //get time and epoch time
+  time_t now = time(nullptr);
+  long int epochTime = static_cast<long int>(now);
+
+  //set lastChange if it hasn't been initialized
+  if (lastChange == 0) {
+    lastChange = epochTime;
+  }
+
+
+
+
   int distance = sonar.ping_in();
   String JSON = "{\"isOpen\": ";
   if (distance > 3) {
-    JSON = JSON + "\"false\"}";
-}
-else {
-  JSON = JSON + + "\"true\"}";
-}
-Serial.print("new distance version:");
-Serial.print(distance);
-Serial.println(" in.");
-if (WiFi.status() == WL_CONNECTED) {  // Send http post request to server
-  https.begin(client, API_URL + "/rest/v1/" + TABLE_NAME);
-  https.addHeader("Content-Type", "application/json");
-  https.addHeader("Prefer", "return=representation");
-  https.addHeader("apikey", API_KEY);
-  https.addHeader("Authorization", "Bearer " + API_KEY);
-  int httpCode = https.POST(JSON);
-  String payload = https.getString();
-  Serial.println(httpCode);  // print http return code
-  Serial.println(payload);   // print request response payload
-  https.end();
-} else {
-  Serial.println("WiFi disconnected.");
-}  // TODO: create function with each request method and call accordingly
-// on barcode scan => POST
-// on ultrasonic range change => POST && tell lcd MCU barcode and to GET from supabase
-// on poke from lcd MCU => GET product name from barcode
-// consider ESPNow or Websocket protocol between lcd and ultrasonic
-// TODO: remove this delay
-delay(3000);  // wait to send the next request
+    JSON = JSON + "\"false\"";
+    long int timeChange = epochTime - lastChange;
+    JSON += ", \"timeElapsed\": ";
+    JSON += timeChange;
+    JSON += "}";
+    newState = "Closed";
+  }
+
+  else {
+    JSON = JSON + +"\"true\"";
+    long int timeChange = epochTime - lastChange;
+    JSON += ", \"timeElapsed\": ";
+    JSON += timeChange;
+    JSON += "}";
+    newState = "Open";
+  }
+
+  //send an HTTP request with the exact timestamp if the state of the fridge changes
+
+  if (oldState != newState) {
+    Serial.println("Changed state.");
+    Serial.println("Time at state change: ");
+    Serial.println(epochTime);
+    if (WiFi.status() == WL_CONNECTED) {  // Send http post request to server
+      https.begin(client, API_URL + "/rest/v1/" + TABLE_NAME);
+      https.addHeader("Content-Type", "application/json");
+      https.addHeader("Prefer", "return=representation");
+      https.addHeader("apikey", API_KEY);
+      https.addHeader("Authorization", "Bearer " + API_KEY);
+      int httpCode = https.POST(JSON);
+      Serial.println(JSON);
+      String payload = https.getString();
+      Serial.println(httpCode);  // print http return code
+      Serial.println(payload);   // print request response payload
+      https.end();
+    } else {
+      Serial.println("WiFi disconnected.");
+    }
+    oldState = newState;
+    lastChange = epochTime;
+    Serial.println("new state: " + newState);
+  }
+
+  delay(250);  // wait to send the next request
+  Serial.println(distance);
 }
