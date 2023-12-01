@@ -14,7 +14,7 @@ export default async function Index() {
           <ModeToggle></ModeToggle>
         </div>
       </nav>
-      <div className="flex justify-between w-[75%]">
+      <div className="flex flex-col md:flex-row w-full md:w-[1020px] justify-center md:justify-between items-center">
         <div>
           <h1 className="scroll-m-20 text-4xl font-bold   tracking-tight lg:text-5xl">Pantry Pal</h1>
         </div>
