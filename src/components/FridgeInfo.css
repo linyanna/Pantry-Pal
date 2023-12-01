@@ -1,4 +1,29 @@
-
 .fridge-info-text {
+    margin-top: 6px;
     color: black;
+}
+
+.fridge-info-open {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+    background-color: green;
+}
+
+.fridge-info-closed {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+    background-color: red;
+}
+
+
+.fridge-info-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.fridge-info-header {
+    display: flex;
+    flex-direction: row;
 }
