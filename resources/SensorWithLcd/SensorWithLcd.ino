@@ -35,7 +35,7 @@ LiquidCrystal_I2C lcd(0x3f,16,2);
 #define ECHO 32
 
 // OTHER MACROS
-#define TRIGGER_DISTANCE 12  // Distance we want to trip that alarm at or under (in Inches)
+#define TRIGGER_DISTANCE 5   // Distance we want to trip that alarm at or under (in Inches)
 #define MAX_DISTANCE 36      // Maximum distance we want to measure (in Inches)
 #define PING_INTERVAL 1000   // 1 second interval for ultrasonic sensor to get distance measurements 
 
