@@ -19,13 +19,13 @@ int scanState = LOW;
 
 // Put your supabase URL and Anon key here...
 // Because Login already implemented, there's no need to use secretrole key
-String API_URL = "https://ninnntxqlfkxrtwsxtao.supabase.co";
-String API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbm5udHhxbGZreHJ0d3N4dGFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTkxMjU1MDYsImV4cCI6MjAxNDcwMTUwNn0.Wg5_xp25r6UuzRqL1P3tkxDUUzRqlTrK3N-MLPVQKmE";
+String API_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+String API_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 String TABLE_NAME = "esp32_barcodes";
 
 // Put your WiFi credentials (SSID and Password) here
-const char* ssid = "Weefee"; 
-const char* pswd = "tofeeornottofee1w3"; 
+const char* ssid = ""; 
+const char* pswd = ""; 
 
 // Declare objects
 HardwareSerial scannerSerial(1);
