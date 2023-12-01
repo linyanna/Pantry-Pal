@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { cn } from "@/src/lib/utils"
 import {
   Table,
   TableBody,
@@ -14,6 +13,8 @@ import {
 
 // Import the Supabase client from utils
 import { supabase } from '../lib/utils/supabase/supabaseConnection';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
 
 interface Product {
   code: string;
@@ -30,7 +31,6 @@ interface Product {
 }
 
 export default function InventoryTable() {
-  const [newProduct, setNewProduct] = useState<any | null>(null);
   const [inventory, setInventory] = useState<any[] | []>([]);
   const [showIngredients, setShowIngredients] = useState(false);
   const [expandedRows, setExpandedRows] = useState<any[]>([]);
@@ -76,25 +76,6 @@ export default function InventoryTable() {
     }
   }
 
-  // Add a new product to storage
-  const addProduct = async () => {
-    try {
-        // Insert the new item, providing the item name; the rest gets
-        // filled in automatically
-        let { data, error } = await supabase
-            .from('products_duplicate')
-            .insert([{name:"hi", barcode: 123}]);
-
-        // Handle any errors.
-        if (error) { throw error }
-        // Upon success, update the inventory
-        if (data) {
-            fetchInventory();
-        }
-    } catch (error) {
-        alert((error as Error).message);
-    }
-  }
   async function updateInventory() {
     console.log("Checking esp32_barcodes table for any entries since last update...");
     try {
@@ -223,8 +204,6 @@ export default function InventoryTable() {
                     }
                   }
                 }
-                /// TODO_AFTER_TESTING: delete from barcodes table
-                
               }
           } catch (error) {
               alert((error as Error).message);
@@ -232,86 +211,65 @@ export default function InventoryTable() {
           }
         }
       }
-  } catch (error) {
-      alert((error as Error).message);
-  }
-  let { error } = await supabase 
-                          .from('esp32_barcodes')
-                          .delete()
-                          .gt('id',0);
-                      if (error) { 
-                        throw error 
-                      } else {
-                        console.log("   Successfully cleared queried entries.");
-                      }
-                      fetchInventory();
-
-  }
-
-  const addProductBarcode = async (barcode: string | number) => {
-    try {
-        // First try to fetch product information from the food info table
-
-        // Insert the new item, providing the item name and barcode; the rest gets filled in automatically
-        let { data, error } = await supabase
-            .from('products_duplicate')
-            .insert([{ name: "hi", barcode }]);
-
-        // Handle any errors.
-        if (error) { throw error; }
-        
-        // Upon success, update the inventory
-        if (data) {
-            await fetchInventory(); // Assuming fetchInventory is an async function, await it here
-        }
     } catch (error) {
         alert((error as Error).message);
     }
-}
-
-const handleRowExpand = (index: number) => {
-  if (expandedRows.includes(index)) {
-    setExpandedRows(expandedRows.filter((rowIndex) => rowIndex !== index));
-  } else {
-    setExpandedRows([...expandedRows, index]);
+    let { error } = await supabase 
+      .from('esp32_barcodes')
+      .delete()
+      .gt('id',0);
+    if (error) { 
+      throw error 
+    } else {
+      console.log("   Successfully cleared queried entries.");
+    }
+    fetchInventory();
   }
-};
 
-const truncateText = (text: string, maxLength: number) => {
-  if (text.length <= maxLength) {
-    return text;
-  } else {
-    return text.substring(0, maxLength) + '...';
-  }
-};
+  const handleRowExpand = (index: number) => {
+    if (expandedRows.includes(index)) {
+      setExpandedRows(expandedRows.filter((rowIndex) => rowIndex !== index));
+    } else {
+      setExpandedRows([...expandedRows, index]);
+    }
+  };
 
-const filteredInventory = inventory.filter((item: any) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-);
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) {
+      return text;
+    } else {
+      return text.substring(0, maxLength) + '';
+    }
+  };
 
-const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-  setSearchQuery(event.target.value);
-};
+  const filteredInventory = inventory.filter((item: any) =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
 
   return (
     <div>
-      <p>{statusMessage}</p>
-      <input
+      <span>{statusMessage}</span>
+      <Input
         type="text"
         placeholder="Search by name..."
         value={searchQuery}
         onChange={handleSearch}
+        className="mt-2 mb-2"
       />
       {
         filteredInventory && (
-          <Table>
+          <Table className="w-full">
             <TableCaption>A list of your products.</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Name</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Barcode</TableHead>
                 <TableHead>Quantity</TableHead>
-                <TableHead className="text-right">Ingredients</TableHead>
+                <TableHead className="text-right w-[24rem]">Ingredients</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -319,16 +277,16 @@ const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
                 filteredInventory.map((row: any, index: number) => {
                   const isExpanded = expandedRows.includes(index);
                   return (
-                    <TableRow key={row.barcode}>
+                    <TableRow className="h-12 max-h-full" key={row.barcode}>
                       <TableCell className="font-medium">{row.name}</TableCell>
                       <TableCell>{row.barcode}</TableCell>
                       <TableCell>{row.quantity}</TableCell>
                       <TableCell className="text-right">
-                        {isExpanded ? row.ingredients : truncateText(row.ingredients, 15)}
-                        {row.ingredients.length > 15 && (
-                          <button onClick={() => handleRowExpand(index)}>
-                            {isExpanded ? '  (Collapse)' : '...'}
-                          </button>
+                        {isExpanded ? row.ingredients : truncateText(row.ingredients, 75)}
+                        {row.ingredients.length > 75 && (
+                          <Button className="ml-2 h-5" onClick={() => handleRowExpand(index)}>
+                            {isExpanded ? <p>Collapse</p> : <p>...</p>}
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
