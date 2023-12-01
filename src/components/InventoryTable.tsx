@@ -35,14 +35,16 @@ export default function InventoryTable() {
   const [showIngredients, setShowIngredients] = useState(false);
   const [expandedRows, setExpandedRows] = useState<any[]>([]);
   const [statusMessage, setStatusMessage] = useState("Checking for new entries...");
+  const [searchQuery, setSearchQuery] = useState('');
+
   useEffect(() => {
     let isMounted = true;
     const inventoryTimeout = setTimeout(() => {
       if(isMounted) {
-        updateInventory();
         fetchInventory();
+        updateInventory();
       }
-    }, 5000)
+    }, 100)
     return () => {
       isMounted = false;
       clearTimeout(inventoryTimeout);
@@ -127,20 +129,25 @@ export default function InventoryTable() {
                   }
                   // CASE 2: Adding scanned barcode that does not exist in products table
                   else {
+                    try {
                     console.log("Product not found in table, retrieving name from food API");
                     let foodInfo = await fetch("https://world.openfoodfacts.org/api/v2/product/" + tableEntries[i].barcode).then(res => res.json());
-                    console.log(foodInfo);
+                    console.log(foodInfo)
                     console.log("Adding product to table...");
                     // Add product with scanned barcode to table along with its fetched info from API
+                    let food_name = foodInfo.product.product_name;
+                    let ingredient_text = foodInfo.product.ingredients_text;
+                    if (food_name == null) food_name = "Unnamed Product";
+                    if (ingredient_text == null) ingredient_text = "Unavailable";
                     try {
                       let { data, error } = await supabase
                           .from('products')
                           .insert({
-                            name: foodInfo.product.product_name, 
+                            name: food_name,
                             barcode: foodInfo.product.code,
                             quantity: 1,
                             inserted_at: new Date(),
-                            ingredients: foodInfo.product.ingredients_text,
+                            ingredients: ingredient_text
                           });
                       if (error) { 
                         throw error 
@@ -152,6 +159,10 @@ export default function InventoryTable() {
                       alert((error as Error).message);
                     }
                   }
+                  catch (error) {
+                    alert((error as Error).message);
+                  }
+                }
                 }
                 else {
                   // CASE 3: Removing scanned barcode that exists in products table
@@ -224,7 +235,17 @@ export default function InventoryTable() {
   } catch (error) {
       alert((error as Error).message);
   }
-  fetchInventory();
+  let { error } = await supabase 
+                          .from('esp32_barcodes')
+                          .delete()
+                          .gt('id',0);
+                      if (error) { 
+                        throw error 
+                      } else {
+                        console.log("   Successfully cleared queried entries.");
+                      }
+                      fetchInventory();
+
   }
 
   const addProductBarcode = async (barcode: string | number) => {
@@ -264,11 +285,25 @@ const truncateText = (text: string, maxLength: number) => {
   }
 };
 
+const filteredInventory = inventory.filter((item: any) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+);
+
+const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+  setSearchQuery(event.target.value);
+};
+
   return (
     <div>
       <p>{statusMessage}</p>
+      <input
+        type="text"
+        placeholder="Search by name..."
+        value={searchQuery}
+        onChange={handleSearch}
+      />
       {
-        inventory && (
+        filteredInventory && (
           <Table>
             <TableCaption>A list of your products.</TableCaption>
             <TableHeader>
@@ -281,7 +316,7 @@ const truncateText = (text: string, maxLength: number) => {
             </TableHeader>
             <TableBody>
               {
-                inventory.map((row: any, index: number) => {
+                filteredInventory.map((row: any, index: number) => {
                   const isExpanded = expandedRows.includes(index);
                   return (
                     <TableRow key={row.barcode}>
