@@ -1,6 +1,7 @@
 import AuthButton from '../components/AuthButton'
 import FoodFactsCard from '../components/FoodFactsCard'
 import InventoryTable from '../components/InventoryTable'
+import FridgeInfo from '../components/FridgeInfo'
 import { ModeToggle } from '../components/ModeToggle'
 
 export default async function Index() {
@@ -20,6 +21,7 @@ export default async function Index() {
         <p>
           We love Pantry Pal.
         </p>
+        <FridgeInfo />
       </footer>
     </div>
   )
